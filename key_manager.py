@@ -13,7 +13,7 @@ def getKey():
     if not os.path.exists("adminKeys.keys"):
         print("Error, no valid keys. Generating keys now...")
         gen_and_save_key()
-    
+
     with open("adminKeys.keys", "rb") as keyFile:
         return keyFile.read()
     
