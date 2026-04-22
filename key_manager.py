@@ -16,4 +16,3 @@ def getKey():
 
     with open("adminKeys.keys", "rb") as keyFile:
         return keyFile.read()
-    
