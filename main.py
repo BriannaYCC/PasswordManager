@@ -39,9 +39,7 @@ while True:
         break
 if userChoice == '2':
     
-   
-
-# ultraSecretPassword = "Bri4nn42023!"
+# ultraSecretPassword = "testpassword"
 # passwordEncrypted = ultraSecretPassword.encode()
 
 # encryptedPassWord = cipher.encrypt(passwordEncrypted)
