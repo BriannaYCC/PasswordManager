@@ -1,29 +1,47 @@
 from cryptography.fernet import Fernet
 import sys
 import key_manager
+from pathlib import Path
 
 authUsernames = []
 authPasswords = [] 
 
 # key to decode, cipher does the work 
-key_manager.gen_and_save_key()
+filePath = Path("adminKeys.keys")
+if not filePath.exists():
+    key_manager.gen_and_save_key("adminKeys.keys")
 cipher = Fernet(key_manager.getKey())
+
+# load existing passwords from files
+
+def loadExistingPasswords():
+    try:
+        # check if files exist
+        with open("usernames.txt", "rb") as usersFile:
+            encryptedUsers = usersFile.readlines()
+            
+        with open("passwords.txt", "rb") as passwordsFile:
+            encryptedPasswords = passwordsFile.readlines()
+
+        for encryptUser, encryptPassword in zip(encryptedUsers, encryptedPasswords):
+            decryptedUser = cipher.decrypt(encryptUser.strip())
+            decryptedPassword = cipher.decrypt(encryptPassword.strip())
+
+            authUsernames.append(decryptedUser.decode())
+            authPasswords.append(decryptedPassword.decode())    
+    except FileNotFoundError:
+        # if no credentials or file doesn't exist
+        pass
 
 # decodes username and password, then prints result
 def displayPasswords():
     if len(authUsernames) == 0:
         print("\nNo passwords found")
     else:
-        with open("usernames.txt", "rb") as usersFile:
-            decryptedUser = cipher.decrypt(usersFile.read())
-        with open("passwords.txt", "rb") as passwordsFile:
-            decryptedPassword = cipher.decrypt(passwordsFile.read())
-        decodedUser = decryptedUser.decode()
-        decodedPassword = decryptedPassword.decode()
-
-    
+        # decrypting and handling of file is done elsewhere
+        # assumes file is decrypted and info is put into list
         for i in range(len(authUsernames)):
-            print("U: " + decodedUser + " P: " + decodedPassword)
+            print("U: " + authUsernames[i] + " P: " + authPasswords[i])
 
 # encodes and encrypts username/password and saves
 def createPassword(username, password):
@@ -33,15 +51,18 @@ def createPassword(username, password):
     encryptUser = cipher.encrypt(encodeUser)
     encryptPassword = cipher.encrypt(encodePassword)
 
-    with open("usernames.txt", "wb") as usersFile:
-        usersFile.write(encryptUser)
-    with open("passwords.txt", "wb") as passwordsFile:
-        passwordsFile.write(encryptPassword)
+    with open("usernames.txt", "ab") as usersFile:
+        usersFile.write(encryptUser + b"\n")
+    with open("passwords.txt", "ab") as passwordsFile:
+        passwordsFile.write(encryptPassword + b"\n")
 
-    authUsernames.append(encryptUser)
-    authPasswords.append(encryptPassword)
+    authUsernames.append(username)
+    authPasswords.append(password)
 
     print("Password successfully added")
+
+
+loadExistingPasswords()
 
 while True:
     print("\n[ Password Manager ]")
@@ -61,7 +82,6 @@ if userChoice == '1':
         passWord = input("Password: ")
 
         if userName == "BINC" and passWord == "test":
-            cipher = Fernet(key_manager.getKey())
             break
         else:
             print("\nIncorrect username and/or password")
@@ -75,6 +95,7 @@ while True:
     print("\nSelect an option below: ")
     print("[1] View Passwords")
     print("[2] Add a new password")
+    
     userChoice = input(": ")
     if userChoice == '1' or userChoice == '2':
         break
@@ -91,8 +112,6 @@ if userChoice == '1':
             print("Okay, bye user!")
             sys.exit(0)
         print("\nInvalid choice. Try again.")
-
-    
 
 if userChoice == '2':
     # confirm new account information is correct
@@ -119,17 +138,5 @@ if userChoice == '2':
         elif userChoice == "Y" or userChoice == "y":
             continue
         else:
-            print("Invalid input. Try again.")
-
-
-# cipher = Fernet(key_manager.getKey())
-
-# ultraSecretPassword = "Here is my secret message!"
-
-# passwordEncrypted = ultraSecretPassword.encode()
-# # print(passwordEncrypted)
-# encryptedPassWord = cipher.encrypt(passwordEncrypted)
-# # print(encryptedPassWord)
-# decryptedPassWord = cipher.decrypt(encryptedPassWord)
-# # print(decryptedPassWord)
-# print("Here is your password: " + decryptedPassWord.decode())
+            print("Invalid input. Bye user!")
+    
